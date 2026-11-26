@@ -1,0 +1,206 @@
+====================================================================================================
+BỘ CÂU HỎI VÀ CÂU TRẢ LỜI VẤN ĐÁP / BẢO VỆ ĐỒ ÁN MÔN KHOA HỌC DỮ LIỆU
+ĐỀ TÀI: DỰ ĐOÁN XÁC SUẤT CHUYỂN VIỆC CỦA CHUYÊN VIÊN DỮ LIỆU (HR ANALYTICS)
+Tập dữ liệu: HR Analytics: Job Change of Data Scientists (D:\Năm 3 học kỳ 1\Khoa học dữ liệu\HR Analytics)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+BẢNG TỔNG HỢP CHI TIẾT CÁC THUỘC TÍNH VÀ CÁCH XỬ LÝ DỮ LIỆU
+----------------------------------------------------------------------------------------------------
+Tổng quy mô: 19.158 dòng train, 2.129 dòng test.
+Số chiều: 12 thuộc tính đầu vào (Features) + 1 nhãn mục tiêu (target).
+Trạng thái sau tiền xử lý: 100% dữ liệu là số (int64/float64), 0 giá trị NaN, 0 giá trị âm (-1).
+
+STT | Tên thuộc tính          | Kiểu gốc | Kiểu sau xử lý | Ý nghĩa nghiệp vụ                       | Tỷ lệ khuyết | Cách xử lý khuyết & Số hóa (Slide 7)
+----+--------------------------+----------+----------------+-----------------------------------------+--------------+-----------------------------------------------------------
+1   | enrollee_id              | int64    | int64          | ID duy nhất của ứng viên/học viên       | 0.00%        | Giữ nguyên, dùng để định danh cá nhân.
+2   | city                     | object   | int64          | Mã thành phố cư trú (city_103,...)      | 0.00%        | Tách chuỗi bỏ 'city_', lấy số nguyên ID (0-180).
+3   | city_development_index   | float64  | float64        | Chỉ số phát triển đô thị (CDI: 0.4-0.9) | 0.00%        | Giữ nguyên giá trị số thực liên tục.
+4   | gender                   | object   | int64          | Giới tính ứng viên                      | 23.53%       | Điền Mode (Male). Mã hóa: Female=0, Male=1, Other=2.
+5   | relevent_experience      | object   | int64          | Kinh nghiệm liên quan đến Data Science  | 0.00%        | Mã hóa: No relevent exp=0, Has relevent exp=1.
+6   | enrolled_university      | object   | int64          | Loại hình học đại học đang theo học     | 2.01%        | Điền Mode (no_enrollment). no_enroll=0, Part=1, Full=2.
+7   | education_level          | object   | int64          | Bậc học cao nhất (Thứ bậc)              | 2.40%        | Điền Mode (Graduate). Primary=0, High=1, Grad=2, Mast=3, Phd=4.
+8   | major_discipline         | object   | int64          | Chuyên ngành đại học chính              | 14.68%       | Điền Mode (STEM). STEM=0, Business=1, Arts=2, Hum=3, No=4, Other=5.
+9   | experience               | object   | int64          | Số năm kinh nghiệm làm việc (Thứ bậc)   | 0.34%        | Điền Median (9 năm). <1=0, 1..20 giữ nguyên, >20=21.
+10  | company_size             | object   | int64          | Quy mô nhân sự công ty hiện tại (Bậc)   | 30.87%       | Điền Mode (50-99). <10=0, 10/49=1, 50-99=2 ... 10000+=7.
+11  | company_type             | object   | int64          | Loại hình công ty (Pvt Ltd, Startup,..) | 32.05%       | Điền Mode (Pvt Ltd). Pvt Ltd=0, Funded=1, Early=2 ... Other=5.
+12  | last_new_job             | object   | int64          | Số năm kể từ lần đổi việc trước (Bậc)   | 2.21%        | Điền Mode (1). never=0, 1=1, 2=2, 3=3, 4=4, >4=5.
+13  | training_hours           | int64    | int64          | Tổng số giờ đào tạo đã hoàn thành       | 0.00%        | Giữ nguyên giá trị số nguyên (1 - 336).
+14  | target (Nhãn mục tiêu)   | int64    | int64          | 0: Ở lại gắn bó (75%), 1: Tìm việc (25%)| 0.00%        | Nhãn nhị phân mục tiêu phân lớp có giám sát.
+----------------------------------------------------------------------------------------------------
+
+
+====================================================================================================
+PHẦN TRẢ LỜI CÁC CÂU HỎI VẤN ĐÁP CHI TIẾT (TỪ ẢNH CHỤP MÀN HÌNH)
+====================================================================================================
+
+CÂU HỎI 1: LÀM ĐỂ LÀM GÌ ? (MỤC ĐÍCH CỦA ĐỀ TÀI LÀ GÌ ?)
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Mục đích cốt lõi của đề tài là: "Dự đoán xác suất một chuyên viên dữ liệu (Data Scientist) sau khi
+tham gia khóa đào tạo của công ty sẽ có ý định chuyển việc (nhảy việc) hay ở lại cống hiến cho tổ chức."
+
+Ý nghĩa thực tiễn đối với doanh nghiệp (HR Analytics & Business Value):
+1. Tối ưu chi phí đào tạo và tuyển dụng: Chi phí để tuyển và đào tạo một Data Scientist mới thường
+   cao gấp 1.5 - 2 lần lương hàng năm của họ. Dự đoán sớm giúp doanh nghiệp tránh đầu tư lãng phí vào
+   các ứng viên chỉ học xong rồi bỏ đi sang công ty khác.
+2. Chủ động giữ chân nhân tài (Talent Retention): Nhận diện trước nguy cơ nhân viên nộp đơn từ 3 - 6 tháng
+   để phòng Nhân sự (HR) kịp thời can thiệp: phỏng vấn giữ chân (Stay Interview), đề xuất tăng lương,
+   thưởng, giao dự án AI hấp dẫn hoặc thăng chức.
+3. Hoạch định nguồn nhân lực: Giúp công ty chủ động mở các đợt tuyển dụng kế cận, tránh bị động làm gián
+   đoạn các dự án công nghệ trọng điểm.
+
+
+CÂU HỎI 2: THUẬT TOÁN LÀ GÌ ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Đề tài xây dựng và đánh giá đối đầu 3 thuật toán học máy đại diện cho 3 trường phái kinh điển trong Data Science:
+
+1. Logistic Regression (Hồi quy Logistic):
+   - Trường phái: Mô hình tuyến tính tham số (Parametric Linear Model).
+   - Cơ chế: Tính tổ hợp tuyến tính các đặc trưng z = w^T * x + b, sau đó ánh xạ qua hàm phi tuyến
+     Sigmoid: P(y=1|x) = 1 / (1 + e^-z) để đưa ra xác suất dự đoán nhị phân trong khoảng [0, 1].
+   - Vai trò: Đóng vai trò là mô hình cơ sở chuẩn (Baseline Model).
+
+2. Random Forest (Rừng ngẫu nhiên):
+   - Trường phái: Mô hình học máy tập hợp (Ensemble Learning) theo phương pháp Bagging (Bootstrap Aggregating).
+   - Cơ chế: Xây dựng đồng thời 150 cây quyết định (Decision Trees) độc lập trên các tập con mẫu ngẫu nhiên
+     có hoàn lại (Bootstrap Samples) và ngẫu nhiên hóa không gian đặc trưng tại mỗi nút phân nhánh. Kết quả
+     cuối cùng là trung bình cộng xác suất từ 150 cây, giúp triệt tiêu phương sai và chống quá khớp (overfitting).
+
+3. LightGBM (Light Gradient Boosting Machine):
+   - Trường phái: Mô hình học máy tập hợp theo phương pháp Boosting (Tăng cường độ dốc).
+   - Cơ chế: Xây dựng chuỗi cây quyết định tuần tự, cây sau sửa chữa sai số (phần dư gradient) của cây trước.
+     Áp dụng giải thuật phát triển cây theo nút lá (Leaf-wise), kết hợp kỹ thuật lấy mẫu gradient một phía (GOSS)
+     và gom cụm đặc trưng xung khắc (EFB), mang lại tốc độ cực nhanh và độ chính xác tối ưu.
+
+
+CÂU HỎI 3: TẠI SAO LẠI DÙNG THUẬT TOÁN ẤY ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Việc lựa chọn kết hợp 3 thuật toán này tuân theo đúng phương pháp luận khoa học thực nghiệm trong Data Science:
+
+1. Cần một mô hình Baseline (Logistic Regression):
+   - Để có mốc chuẩn đối sánh xem các giải thuật phức tạp hơn có thực sự cải thiện hiệu năng hay không.
+   - Ưu điểm: Đơn giản, tốc độ huấn luyện mili-giây, dễ diễn giải trọng số, nhưng bị hạn chế do chỉ bắt được
+     mối quan hệ tuyến tính (CV ROC-AUC đạt 0.7274).
+
+2. Cần một mô hình Bagging chống quá khớp (Random Forest):
+   - Dữ liệu nhân sự có nhiều thuộc tính phân loại và thứ bậc phi tuyến. Cây quyết định đơn lẻ rất dễ overfit,
+     do đó Random Forest (150 cây) giúp giảm thiểu tối đa hiện tượng học vẹt, xử lý ổn định dữ liệu có thang
+     đo khác nhau, cho kết quả cân bằng tốt giữa Precision (52.04%) và Recall (74.87%), CV AUC = 0.7844.
+
+3. Cần một mô hình Boosting tối ưu cao nhất (LightGBM):
+   - Thuật toán Gradient Boosting tối ưu hóa trực tiếp hàm mất mát log-loss.
+   - Khả năng xử lý mất cân bằng lớp xuất sắc: Bằng cách gán trọng số phạt scale_pos_weight = 3.0 (bằng đúng tỷ lệ
+     75% lớp 0 / 25% lớp 1), LightGBM đạt độ nhạy (Recall) lên tới 79.06% và ROC-AUC cao nhất (0.7890).
+   - Trong bài toán HR, phát hiện đúng 79% nhân sự có nguy cơ nghỉ việc là yếu tố giá trị nhất, nên LightGBM
+     được chọn là mô hình tối ưu được khuyến nghị triển khai thực tế.
+
+
+CÂU HỎI 4: ĐÂY LÀ BÀI TOÁN RA QUYẾT ĐỊNH BÁN CẤU TRÚC HAY CÓ CẤU TRÚC ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Khẳng định: "ĐÂY LÀ BÀI TOÁN RA QUYẾT ĐỊNH BÁN CẤU TRÚC (Semi-structured Decision Problem)."
+
+Giải thích căn cứ theo lý thuyết Hệ thống Hỗ trợ Ra Quyết định (Decision Support Systems - DSS):
+1. Bài toán có cấu trúc (Structured):
+   - Toàn bộ quy trình, dữ liệu và công thức ra quyết định đều rõ ràng 100%, có thể tự động hóa hoàn toàn bằng
+     thuật toán mà không cần con người can thiệp (ví dụ: tự động tính thuế TNCN, tự động trừ tiền ngân hàng).
+2. Bài toán phi cấu trúc (Unstructured):
+   - Hoàn toàn không có dữ liệu số hay thuật toán cố định, phụ thuộc 100% vào kinh nghiệm, trực giác của lãnh đạo
+     (ví dụ: quyết định mua bán sáp nhập doanh nghiệp M&A, định hướng tầm nhìn 10 năm).
+3. Bài toán BÁN CẤU TRÚC (Semi-structured) - ĐỀ TÀI NÀY:
+   - Một phần của bài toán ĐÃ ĐƯỢC CẤU TRÚC HÓA: Đó là việc thu thập 12 biến số nhân sự và dùng mô hình Machine
+     Learning để tính toán định lượng ra xác suất rời đi P(y=1|X) ∈ [0, 1].
+   - Nhưng phần còn lại KHÔNG THỂ CẤU TRÚC HÓA: Tâm lý con người, nguyện vọng cá nhân, mâu thuẫn nội bộ, hoàn
+     cảnh gia đình là những yếu tố định tính không nằm trong bảng số liệu.
+   - Do đó, Machine Learning đóng vai trò là "Hệ thống hỗ trợ ra quyết định (DSS)". Mô hình gợi ý danh sách rủi ro,
+     còn quyết định cuối cùng (có tăng lương không, có thăng chức không, giữ chân như thế nào) vẫn phải do
+     Giám đốc Nhân sự (HR Manager) trực tiếp đánh giá và quyết định dựa trên phỏng vấn thực tế.
+
+
+CÂU HỎI 5: QUYẾT ĐỊNH Ở ĐÂY LÀ GÌ ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Quyết định được chia thành 2 cấp độ rõ ràng:
+
+1. Cấp độ Thuật toán / Mô hình (Model Decision):
+   - Đưa ra quyết định phân loại nhị phân: Gán nhãn dự đoán y_pred = 1 (Có nguy cơ nhảy việc) nếu xác suất
+     dự đoán P(y=1|X) vượt qua ngưỡng quyết định tối ưu (decision threshold theta), ngược lại gán y_pred = 0.
+   - Xếp hạng (Ranking) danh sách toàn bộ nhân sự theo xác suất rủi ro từ cao xuống thấp.
+
+2. Cấp độ Quản trị Doanh nghiệp (Managerial / HR Decision):
+   - Quyết định can thiệp giữ chân (Talent Retention): Đối với nhân viên thuộc nhóm rủi ro cao (y_pred = 1) mà
+     có chuyên môn xuất sắc, HR ra quyết định thực hiện "Stay Interview", đề xuất điều chỉnh lương thưởng,
+     phụ cấp vùng miền, trao quyền làm việc Remote/Hybrid.
+   - Quyết định sàng lọc tuyển sinh/đào tạo: Trong các chương trình tài trợ đào tạo AI đắt đỏ, HR quyết định
+     ưu tiên phân bổ ngân sách cho những ứng viên có xác suất gắn bó cao (y_pred = 0).
+   - Quyết định tuyển dụng kế cận: Đối với các vị trí trọng yếu có xác suất rời bỏ cao, HR chủ động quyết định
+     mở đợt tuyển dụng hoặc đào tạo người kế nhiệm trước để không bị động.
+
+
+CÂU HỎI 6: MÔ HÌNH CHẠY TỐT TRÊN DỮ LIỆU MẪU VẬY CÓ KHẢ THI KHI ĐEM ÁP CHO NHỮNG TẬP DỮ LIỆU KHÁC KHÔNG ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Câu trả lời gồm 2 khía cạnh: Tính khả thi đã được chứng minh và Các điều kiện khi mở rộng sang tập dữ liệu mới:
+
+1. Về tính khả thi trên dữ liệu thực tế cùng bài toán:
+   - Mô hình KHÔNG BỊ OVERFITTING (học vẹt) nhờ được kiểm định chéo Stratified 5-Fold Cross-Validation: điểm CV
+     ROC-AUC đạt 0.7890 ổn định qua cả 5 fold phân tầng.
+   - Khi chạy dự đoán trên tập kiểm thử độc lập aug_test.csv (2.129 dòng hoàn toàn mới, chưa từng thấy trong quá
+     trình huấn luyện), mô hình chạy trơn tru, phân phối xác suất đầu ra đồng nhất và hợp lý.
+   - Do đó, mô hình HOÀN TOÀN KHẢ THI khi áp dụng cho các đợt ứng viên mới trong cùng doanh nghiệp/hệ thống đào tạo.
+
+2. Thách thức khi đem áp cho doanh nghiệp khác hoặc ngành nghề khác:
+   - Hiện tượng Trôi dạt dữ liệu (Data Drift / Covariate Shift): Mỗi công ty, mỗi vùng địa lý có đặc thù văn hóa,
+     thang bảng lương và quy mô khác nhau. Ví dụ: ở công ty nước ngoài, chỉ số thành phố (CDI) có thể không còn là
+     yếu tố quyết định như trong tập dữ liệu này.
+   - Để đảm bảo tính khả thi khi triển khai rộng rãi, giải pháp kỹ thuật là:
+     + Áp dụng MLOps: Theo dõi phân phối dữ liệu đầu vào định kỳ.
+     + Transfer Learning / Fine-Tuning: Thu thập dữ liệu thực tế tại môi trường mới và huấn luyện thích nghi lại
+       mô hình (Re-training) trước khi đưa vào vận hành chính thức.
+
+
+CÂU HỎI 7: CÁC CHIỀU THỨ NGUYÊN CỦA DỮ LIỆU ĐƯỢC XỬ LÝ NHƯ THẾ NÀO ?
+----------------------------------------------------------------------------------------------------
+TRẢ LỜI:
+Tập dữ liệu ban đầu có 12 chiều thứ nguyên (12 features) với cấu trúc phức tạp: định tính danh mục, định tính
+thứ bậc, chuỗi văn bản và số thực. Quy trình xử lý không gian thứ nguyên được tiến hành bài bản qua 4 bước:
+
+1. Khử khuyết thiếu trên từng chiều (Missing Value Imputation theo Slide 7 bài giảng):
+   - Các chiều định lượng có độ lệch (experience): Dùng Trung vị (Median = 9) thay vì Trung bình (Mean) để không
+     bị ảnh hưởng bởi giá trị ngoại lai.
+   - Các chiều định tính (gender, enrolled_university, education_level, major_discipline, company_size,
+     company_type, last_new_job): Dùng Yếu vị (Mode - giá trị xuất hiện nhiều nhất).
+   - Tuyệt đối không dùng nhãn nhân tạo 'Unknown' hay số âm '-1' để tránh làm méo mó không gian đặc trưng.
+
+2. Số hóa toàn diện các chiều thứ nguyên (100% Numeric Pipeline):
+   - Chiều thành phố (city): Bỏ tiền tố chuỗi 'city_', chuyển đổi thành biến định danh số nguyên (0 đến 180).
+   - Các chiều có thứ tự tự nhiên (Ordinal Dimensions): Sử dụng Ordinal Encoding bảo toàn quan hệ thứ bậc:
+     + education_level: Primary (0) < High School (1) < Graduate (2) < Masters (3) < Phd (4).
+     + company_size: <10 (0) < 10/49 (1) < 50-99 (2) < ... < 10000+ (7).
+     + last_new_job: never (0) < 1 (1) < 2 (2) < ... < >4 (5).
+     + experience: <1 (0) < 1..20 < >20 (21).
+   - Các chiều danh mục không có thứ tự (Nominal Dimensions): Ánh xạ nhãn nguyên không âm [0, C-1] cho
+     gender, relevent_experience, enrolled_university, major_discipline, company_type.
+   - Kết quả: Không gian dữ liệu được chuyển đổi 100% thành ma trận số thực và nguyên phi âm (>= 0).
+
+3. Chuẩn hóa thang đo không gian (Dimensional Scaling):
+   - Các chiều có biên độ giá trị rất lệch nhau: city_id (lên tới 180), training_hours (1 đến 336), trong khi
+     city_development_index nằm trong khoảng (0.448 - 0.949).
+   - Để giải thuật tối ưu hóa L-BFGS của Logistic Regression hội tụ tốt và không bị các chiều có biên độ lớn
+     lấn át, kỹ thuật MinMaxScaler được áp dụng để chuẩn hóa tất cả các chiều về cùng đoạn [0, 1].
+
+4. Đánh giá tầm quan trọng của các chiều thứ nguyên (Feature Importance Analysis):
+   - Thay vì dùng PCA làm mất khả năng diễn giải nghiệp vụ, mô hình trích xuất độ giảm bất thuần (Feature Importance)
+     từ LightGBM và Random Forest:
+     + Chiều thứ nguyên quan trọng số 1: city_development_index (chiếm ~35% sức mạnh phân loại).
+     + Chiều thứ nguyên quan trọng số 2: training_hours (chiếm ~22%).
+     + Chiều thứ nguyên quan trọng số 3: experience (chiếm ~15%).
+     + Chiều thứ nguyên quan trọng số 4: company_size (chiếm ~12%).
+
+====================================================================================================
+KẾT LUẬN: TOÀN BỘ CÂU TRẢ LỜI ĐÃ ĐƯỢC CHUẨN HÓA VÀ LƯU TẠI FILE TXT NÀY.
+BẠN CÓ THỂ SỬ DỤNG TRỰC TIẾP ĐỂ ÔN TẬP VÀ TRẢ LỜI VẤN ĐÁP TRƯỚC HỘI ĐỒNG CHẤM ĐIỂM!
+====================================================================================================
